@@ -1,4 +1,4 @@
-
+-- 📌 Kraken Script Hub (Liquid Glass + Animations & KTHUB Header Fix)
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -37,20 +37,21 @@ ScreenGui.Name = "KrakenScriptHub"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = PlayerGui
 
--- 2. Текст/Логотип KTHUB над хабом
+-- 2. Текст/Логотип KTHUB над хабом (Точное имя файла KTHUB.png)
 local Logo = Instance.new("ImageLabel")
 Logo.Name = "KTHubLogo"
-Logo.Size = UDim2.new(0, 240, 0, 80)
-Logo.Position = UDim2.new(0.5, -120, 0.5, -230)
+Logo.Size = UDim2.new(0, 260, 0, 75)
+Logo.Position = UDim2.new(0.5, -130, 0.5, -230)
 Logo.BackgroundTransparency = 1
-Logo.Image = getOnlineImage("KTHUB.png")
+Logo.ScaleType = Enum.ScaleType.Fit
+Logo.Image = getOnlineImage("KTHUB.png") -- Исправлено: KTHUB.png с заглавных букв
 Logo.ImageTransparency = 1
 Logo.Parent = ScreenGui
 
 -- 3. Главный контейнер (Окно Хаба)
 local Container = Instance.new("Frame")
 Container.Name = "Container"
-Container.Size = UDim2.new(0, 0, 0, 0) -- Старт с 0 размера для анимации открытия
+Container.Size = UDim2.new(0, 0, 0, 0)
 Container.Position = UDim2.new(0.5, 0, 0.5, 0)
 Container.BackgroundTransparency = 1
 Container.ClipsDescendants = false
@@ -70,7 +71,7 @@ SideBar.BorderSizePixel = 0
 SideBar.Parent = Container
 
 local SideBarCorner = Instance.new("UICorner")
-SideBarCorner.CornerRadius = UDim.new(0, 22) -- Закругление 1 в 1 как у правого окна
+SideBarCorner.CornerRadius = UDim.new(0, 22)
 SideBarCorner.Parent = SideBar
 
 local SideBarLayout = Instance.new("UIListLayout")
@@ -101,7 +102,7 @@ MainPadding.PaddingRight = UDim.new(0, 20)
 MainPadding.PaddingBottom = UDim.new(0, 20)
 MainPadding.Parent = MainFrame
 
--- 6. Вкладки (CanvasGroup для поддержки прозрачности при анимациях)
+-- 6. Вкладки (CanvasGroup)
 local HomeTab = Instance.new("CanvasGroup")
 HomeTab.Name = "HomeTab"
 HomeTab.Size = UDim2.new(1, 0, 1, 0)
@@ -179,7 +180,7 @@ local function closeHub(onComplete)
     })
     local tween2 = TweenService:Create(Logo, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         ImageTransparency = 1,
-        Position = UDim2.new(0.5, -120, 0.5, -250)
+        Position = UDim2.new(0.5, -130, 0.5, -250)
     })
     tween1:Play()
     tween2:Play()
@@ -189,7 +190,7 @@ local function closeHub(onComplete)
     end)
 end
 
--- Функция создания кнопок в левом меню с анимациями наведения
+-- Создание кнопок бокового меню с анимацией наведения
 local function createNavButton(iconFileName, layoutOrder, onClick)
     local btn = Instance.new("ImageButton")
     btn.Size = UDim2.new(0, 32, 0, 32)
@@ -198,7 +199,6 @@ local function createNavButton(iconFileName, layoutOrder, onClick)
     btn.Image = getOnlineImage(iconFileName)
     btn.Parent = SideBar
 
-    -- Анимация при наведении мыши
     btn.MouseEnter:Connect(function()
         TweenService:Create(btn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
             Size = UDim2.new(0, 38, 0, 38)
@@ -233,7 +233,6 @@ StartBtn.BackgroundTransparency = 1
 StartBtn.Image = getOnlineImage("start.png")
 StartBtn.Parent = ScriptItem
 
--- Анимация наведения для кнопки Старт
 StartBtn.MouseEnter:Connect(function()
     TweenService:Create(StartBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         Size = UDim2.new(0, 44, 0, 44),
@@ -275,7 +274,7 @@ StartBtn.MouseButton1Click:Connect(function()
     end)
 end)
 
--- 🚀 Запуск анимации открытия при старте
+-- 🚀 Плавный анимационный запуск UI и логотипа KTHUB
 TweenService:Create(Container, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
     Size = targetSize,
     Position = targetPos
@@ -283,5 +282,5 @@ TweenService:Create(Container, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.Ea
 
 TweenService:Create(Logo, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
     ImageTransparency = 0,
-    Position = UDim2.new(0.5, -120, 0.5, -210)
+    Position = UDim2.new(0.5, -130, 0.5, -200)
 }):Play()
