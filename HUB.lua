@@ -43,7 +43,7 @@ Logo.Name = "KTHubLogo"
 Logo.Size = UDim2.new(0, 240, 0, 80)
 Logo.Position = UDim2.new(0.5, -120, 0.5, -230)
 Logo.BackgroundTransparency = 1
-Logo.Image = getOnlineImage("kthub.png")
+Logo.Image = getOnlineImage("KTHUB.png")
 Logo.ImageTransparency = 1
 Logo.Parent = ScreenGui
 
