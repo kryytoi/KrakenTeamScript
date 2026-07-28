@@ -1,4 +1,4 @@
--- 📌 Kraken Script Hub (Liquid Glass + Animations & KTHUB Header Fix)
+-- 📌 Kraken Script Hub (Liquid Glass + Animations & Guaranteed KTHUB Text)
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -9,7 +9,7 @@ local RAW_BASE = "https://raw.githubusercontent.com/kryytoi/KrakenTeamScript/mai
 local ICONS_BASE = RAW_BASE .. "icons/"
 local SCRIPTS_BASE = RAW_BASE .. "scripts/"
 
--- Функция для загрузки онлайн-картинок с кэшированием
+-- Функция загрузки онлайн-картинок с кэшированием
 local function getOnlineImage(fileName)
     local url = ICONS_BASE .. fileName
     if writefile and getcustomasset then
@@ -26,7 +26,7 @@ local function getOnlineImage(fileName)
     return url
 end
 
--- Удаляем предыдущий GUI, если он открыт
+-- Удаляем предыдущую версию GUI
 if PlayerGui:FindFirstChild("KrakenScriptHub") then
     PlayerGui.KrakenScriptHub:Destroy()
 end
@@ -37,28 +37,51 @@ ScreenGui.Name = "KrakenScriptHub"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = PlayerGui
 
--- 2. Текст/Логотип KTHUB над хабом (Точное имя файла KTHUB.png)
-local Logo = Instance.new("ImageLabel")
-Logo.Name = "KTHubLogo"
-Logo.Size = UDim2.new(0, 260, 0, 75)
-Logo.Position = UDim2.new(0.5, -130, 0.5, -230)
-Logo.BackgroundTransparency = 1
-Logo.ScaleType = Enum.ScaleType.Fit
-Logo.Image = getOnlineImage("KTHUB.png") -- Исправлено: KTHUB.png с заглавных букв
-Logo.ImageTransparency = 1
-Logo.Parent = ScreenGui
-
--- 3. Главный контейнер (Окно Хаба)
+-- 2. Главный контейнер (Окно Хаба)
 local Container = Instance.new("Frame")
 Container.Name = "Container"
 Container.Size = UDim2.new(0, 0, 0, 0)
 Container.Position = UDim2.new(0.5, 0, 0.5, 0)
 Container.BackgroundTransparency = 1
-Container.ClipsDescendants = false
+Container.ClipsDescendants = false -- Позволяет надписи выходить за пределы окна сверху
 Container.Parent = ScreenGui
 
 local targetSize = UDim2.new(0, 520, 0, 270)
 local targetPos = UDim2.new(0.5, -260, 0.5, -110)
+
+-- 3. Верхняя шапка с логотипом KT HUB (100% видимость)
+local HeaderTitle = Instance.new("Frame")
+HeaderTitle.Name = "HeaderTitle"
+HeaderTitle.Size = UDim2.new(1, 0, 0, 50)
+HeaderTitle.Position = UDim2.new(0, 0, 0, -60)
+HeaderTitle.BackgroundTransparency = 1
+HeaderTitle.Parent = Container
+
+-- А. Гарантированный готический текст KT HUB
+local TextLogo = Instance.new("TextLabel")
+TextLogo.Name = "TextLogo"
+TextLogo.Size = UDim2.new(1, 0, 1, 0)
+TextLogo.BackgroundTransparency = 1
+TextLogo.Text = "KT HUB"
+TextLogo.TextColor3 = Color3.fromRGB(168, 50, 235)
+TextLogo.TextSize = 42
+TextLogo.Font = Enum.Font.Fondamento -- Красивый готический стиль
+TextLogo.Parent = HeaderTitle
+
+local TextStroke = Instance.new("UIStroke")
+TextStroke.Thickness = 3
+TextStroke.Color = Color3.fromRGB(15, 0, 30)
+TextStroke.Parent = TextLogo
+
+-- Б. Изображение KTHUB.png из GitHub (если поддерживается инжектором)
+local ImageLogo = Instance.new("ImageLabel")
+ImageLogo.Name = "ImageLogo"
+ImageLogo.Size = UDim2.new(1, 0, 1, 0)
+ImageLogo.BackgroundTransparency = 1
+ImageLogo.ScaleType = Enum.ScaleType.Fit
+ImageLogo.Image = getOnlineImage("KTHUB.png")
+ImageLogo.ZIndex = 2
+ImageLogo.Parent = HeaderTitle
 
 -- 4. Левая панель (Sidebar)
 local SideBar = Instance.new("Frame")
@@ -66,7 +89,7 @@ SideBar.Name = "SideBar"
 SideBar.Size = UDim2.new(0, 60, 1, 0)
 SideBar.Position = UDim2.new(0, 0, 0, 0)
 SideBar.BackgroundColor3 = Color3.fromRGB(92, 18, 148)
-SideBar.BackgroundTransparency = 0.2 -- Liquid Glass прозрачность
+SideBar.BackgroundTransparency = 0.2 -- Liquid Glass
 SideBar.BorderSizePixel = 0
 SideBar.Parent = Container
 
@@ -87,7 +110,7 @@ MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(1, -75, 1, 0)
 MainFrame.Position = UDim2.new(0, 75, 0, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
-MainFrame.BackgroundTransparency = 0.25 -- Liquid Glass прозрачность
+MainFrame.BackgroundTransparency = 0.25 -- Liquid Glass
 MainFrame.BorderSizePixel = 0
 MainFrame.Parent = Container
 
@@ -118,7 +141,7 @@ SettingsTab.GroupTransparency = 1
 SettingsTab.Visible = false
 SettingsTab.Parent = MainFrame
 
--- Вкладка Настроек
+-- Настройки в вкладке Settings
 local SettingsTitle = Instance.new("TextLabel")
 SettingsTitle.Size = UDim2.new(1, 0, 0, 30)
 SettingsTitle.BackgroundTransparency = 1
@@ -156,7 +179,7 @@ ResizeBtn.MouseButton1Click:Connect(function()
     }):Play()
 end)
 
--- Анимация переключения вкладок
+-- Переключение вкладок
 local currentTab = HomeTab
 local function switchTab(toTab)
     if currentTab == toTab then return end
@@ -172,25 +195,20 @@ local function switchTab(toTab)
     end)
 end
 
--- Анимация закрытия Хаба
+-- Закрытие хаба
 local function closeHub(onComplete)
-    local tween1 = TweenService:Create(Container, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+    local tween = TweenService:Create(Container, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
         Size = UDim2.new(0, 0, 0, 0),
         Position = UDim2.new(0.5, 0, 0.5, 0)
     })
-    local tween2 = TweenService:Create(Logo, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        ImageTransparency = 1,
-        Position = UDim2.new(0.5, -130, 0.5, -250)
-    })
-    tween1:Play()
-    tween2:Play()
-    tween1.Completed:Connect(function()
+    tween:Play()
+    tween.Completed:Connect(function()
         if onComplete then onComplete() end
         ScreenGui:Destroy()
     end)
 end
 
--- Создание кнопок бокового меню с анимацией наведения
+-- Кнопки левой панели
 local function createNavButton(iconFileName, layoutOrder, onClick)
     local btn = Instance.new("ImageButton")
     btn.Size = UDim2.new(0, 32, 0, 32)
@@ -214,12 +232,11 @@ local function createNavButton(iconFileName, layoutOrder, onClick)
     return btn
 end
 
--- Кнопки боковой панели
 createNavButton("home.png", 1, function() switchTab(HomeTab) end)
 createNavButton("settings.png", 2, function() switchTab(SettingsTab) end)
 createNavButton("exit.png", 3, function() closeHub() end)
 
--- Элемент списка (Universal Script)
+-- Строка скрипта Universal Script
 local ScriptItem = Instance.new("Frame")
 ScriptItem.Size = UDim2.new(1, 0, 0, 40)
 ScriptItem.Position = UDim2.new(0, 0, 0, 10)
@@ -257,7 +274,7 @@ TitleLabel.Font = Enum.Font.SourceSans
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 TitleLabel.Parent = ScriptItem
 
--- Запуск скрипта с анимацией закрытия
+-- Запуск
 StartBtn.MouseButton1Click:Connect(function()
     local scriptUrl = SCRIPTS_BASE .. "Universal_script.lua"
     
@@ -274,13 +291,8 @@ StartBtn.MouseButton1Click:Connect(function()
     end)
 end)
 
--- 🚀 Плавный анимационный запуск UI и логотипа KTHUB
+-- 🚀 Плавный анимационный запуск UI
 TweenService:Create(Container, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
     Size = targetSize,
     Position = targetPos
-}):Play()
-
-TweenService:Create(Logo, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-    ImageTransparency = 0,
-    Position = UDim2.new(0.5, -130, 0.5, -200)
 }):Play()
