@@ -271,7 +271,7 @@ local function openSborkaSettings(folderName, scriptsState)
 
     for _, scriptData in ipairs(scriptsState) do
         local ItemFrame = Instance.new("Frame")
-        ItemFrame.Size = UDim2.new(1, -10, 0, 36)
+        ItemFrame.Size = UDim2.new(1, -10, 0, 38)
         ItemFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
         ItemFrame.BackgroundTransparency = 0.4
         ItemFrame.Parent = SborkaSettingsScroll
@@ -283,7 +283,7 @@ local function openSborkaSettings(folderName, scriptsState)
         local cleanName = scriptData.name:gsub("%.lua$", ""):gsub("_", " ")
 
         local NameLabel = Instance.new("TextLabel")
-        NameLabel.Size = UDim2.new(1, -90, 1, 0)
+        NameLabel.Size = UDim2.new(1, -70, 1, 0)
         NameLabel.Position = UDim2.new(0, 12, 0, 0)
         NameLabel.BackgroundTransparency = 1
         NameLabel.Text = cleanName
@@ -293,34 +293,44 @@ local function openSborkaSettings(folderName, scriptsState)
         NameLabel.TextXAlignment = Enum.TextXAlignment.Left
         NameLabel.Parent = ItemFrame
 
-        local ToggleBtn = Instance.new("TextButton")
-        ToggleBtn.Size = UDim2.new(0, 70, 0, 26)
-        ToggleBtn.Position = UDim2.new(1, -78, 0.5, -13)
-        ToggleBtn.Parent = ItemFrame
+        local CapsuleBtn = Instance.new("TextButton")
+        CapsuleBtn.Size = UDim2.new(0, 46, 0, 24)
+        CapsuleBtn.Position = UDim2.new(1, -56, 0.5, -12)
+        CapsuleBtn.AutoButtonColor = false
+        CapsuleBtn.Text = ""
+        CapsuleBtn.Parent = ItemFrame
 
-        local ToggleCorner = Instance.new("UICorner")
-        ToggleCorner.CornerRadius = UDim.new(0, 6)
-        ToggleCorner.Parent = ToggleBtn
+        local CapsuleCorner = Instance.new("UICorner")
+        CapsuleCorner.CornerRadius = UDim.new(1, 0)
+        CapsuleCorner.Parent = CapsuleBtn
 
-        local function updateToggleVisual()
-            if scriptData.enabled then
-                ToggleBtn.BackgroundColor3 = Color3.fromRGB(92, 18, 148)
-                ToggleBtn.Text = "ВКЛ"
-                ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        local Dot = Instance.new("Frame")
+        Dot.Size = UDim2.new(0, 18, 0, 18)
+        Dot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        Dot.Parent = CapsuleBtn
+
+        local DotCorner = Instance.new("UICorner")
+        DotCorner.CornerRadius = UDim.new(1, 0)
+        DotCorner.Parent = Dot
+
+        local function updateToggleVisual(animate)
+            local targetPos = scriptData.enabled and UDim2.new(1, -21, 0.5, -9) or UDim2.new(0, 3, 0.5, -9)
+            local targetBg = scriptData.enabled and Color3.fromRGB(140, 50, 200) or Color3.fromRGB(45, 45, 50)
+
+            if animate then
+                TweenService:Create(Dot, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Position = targetPos }):Play()
+                TweenService:Create(CapsuleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { BackgroundColor3 = targetBg }):Play()
             else
-                ToggleBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
-                ToggleBtn.Text = "ВЫКЛ"
-                ToggleBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
+                Dot.Position = targetPos
+                CapsuleBtn.BackgroundColor3 = targetBg
             end
-            ToggleBtn.Font = Enum.Font.SourceSansBold
-            ToggleBtn.TextSize = 14
         end
 
-        updateToggleVisual()
+        updateToggleVisual(false)
 
-        ToggleBtn.MouseButton1Click:Connect(function()
+        CapsuleBtn.MouseButton1Click:Connect(function()
             scriptData.enabled = not scriptData.enabled
-            updateToggleVisual()
+            updateToggleVisual(true)
         end)
     end
 
@@ -457,6 +467,7 @@ local loadedSborks = {}
 
 local function createSborkaCard(folderName, luaFiles, descUrl)
     if loadedSborks[folderName] then return end
+    if #luaFiles == 0 then return end
     loadedSborks[folderName] = true
 
     local scriptsState = {}
@@ -627,17 +638,6 @@ local function loadAllScripts()
 end
 
 local function loadAllSborks()
-    local defaultSborks = {
-        {
-            name = "Brookhaven",
-            descUrl = SBORKS_RAW .. "Brookhaven/description.txt",
-            files = {
-                { name = "main.lua", url = SBORKS_RAW .. "Brookhaven/main.lua" },
-                { name = "script.lua", url = SBORKS_RAW .. "Brookhaven/script.lua" }
-            }
-        }
-    }
-
     task.spawn(function()
         local apiSuccess, apiContent = pcall(function()
             return game:HttpGet(SBORKS_API .. "?t=" .. tostring(tick()), true)
@@ -668,12 +668,9 @@ local function loadAllSborks()
                             end
                         end
 
-                        if #luaFiles == 0 then
-                            table.insert(luaFiles, { name = "main.lua", url = SBORKS_RAW .. folderName .. "/main.lua" })
-                            table.insert(luaFiles, { name = "script.lua", url = SBORKS_RAW .. folderName .. "/script.lua" })
+                        if #luaFiles > 0 then
+                            createSborkaCard(folderName, luaFiles, descUrl)
                         end
-
-                        createSborkaCard(folderName, luaFiles, descUrl)
                     end
                 end
             end
@@ -685,17 +682,23 @@ local function loadAllSborks()
 
         if htmlSuccess and type(htmlContent) == "string" then
             for folderName in string.gmatch(htmlContent, 'sborks/([%w_%-]+)"') do
-                local luaFiles = {
-                    { name = "main.lua", url = SBORKS_RAW .. folderName .. "/main.lua" },
-                    { name = "script.lua", url = SBORKS_RAW .. folderName .. "/script.lua" }
-                }
-                local descUrl = SBORKS_RAW .. folderName .. "/description.txt"
-                createSborkaCard(folderName, luaFiles, descUrl)
+                if not loadedSborks[folderName] then
+                    local subHtmlUrl = "https://github.com/kryytoi/KrakenTeamScript/tree/main/sborks/" .. folderName
+                    local luaFiles = {}
+                    local subSuccess, subContent = pcall(function()
+                        return game:HttpGet(subHtmlUrl .. "?t=" .. tostring(tick()), true)
+                    end)
+                    if subSuccess and type(subContent) == "string" then
+                        for file in string.gmatch(subContent, 'sborks/' .. folderName .. '/([%w_%-%.]+%.lua)') do
+                            table.insert(luaFiles, { name = file, url = SBORKS_RAW .. folderName .. "/" .. file })
+                        end
+                    end
+                    local descUrl = SBORKS_RAW .. folderName .. "/description.txt"
+                    if #luaFiles > 0 then
+                        createSborkaCard(folderName, luaFiles, descUrl)
+                    end
+                end
             end
-        end
-
-        for _, sb in ipairs(defaultSborks) do
-            createSborkaCard(sb.name, sb.files, sb.descUrl)
         end
     end)
 end
