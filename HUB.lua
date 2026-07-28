@@ -1,17 +1,14 @@
--- 📌 Kraken Script Hub (Multi-Source Dynamic Script Loader with Filter)
 local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- 🔗 Ссылки на GitHub
 local RAW_BASE = "https://raw.githubusercontent.com/kryytoi/KrakenTeamScript/main/"
 local ICONS_BASE = RAW_BASE .. "icons/"
 local REPO_TREE = "https://github.com/kryytoi/KrakenTeamScript/tree/main/scripts"
 local API_SCRIPTS = "https://api.github.com/repos/kryytoi/KrakenTeamScript/contents/scripts"
 
--- Загрузка онлайн-картинок с обходом кэша
 local function getOnlineImage(fileName)
     local url = ICONS_BASE .. fileName .. "?nocache=" .. tostring(tick())
     local assetPath = "kraken_v7_" .. fileName
@@ -34,18 +31,15 @@ local function getOnlineImage(fileName)
     return url
 end
 
--- Удаляем предыдущую версию GUI
 if PlayerGui:FindFirstChild("KrakenScriptHub") then
     PlayerGui.KrakenScriptHub:Destroy()
 end
 
--- 1. ScreenGui
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "KrakenScriptHub"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = PlayerGui
 
--- 2. Главный контейнер (Окно Хаба)
 local Container = Instance.new("Frame")
 Container.Name = "Container"
 Container.Size = UDim2.new(0, 0, 0, 0)
@@ -57,7 +51,6 @@ Container.Parent = ScreenGui
 local targetSize = UDim2.new(0, 520, 0, 270)
 local targetPos = UDim2.new(0.5, -260, 0.5, -110)
 
--- 3. Картинка KTHUB.png
 local KTHubLogo = Instance.new("ImageLabel")
 KTHubLogo.Name = "KTHubLogo"
 KTHubLogo.Size = UDim2.new(0, 320, 0, 90)
@@ -68,7 +61,6 @@ KTHubLogo.Image = getOnlineImage("KTHUB.png")
 KTHubLogo.ZIndex = 10
 KTHubLogo.Parent = Container
 
--- 4. Левая панель (Sidebar)
 local SideBar = Instance.new("Frame")
 SideBar.Name = "SideBar"
 SideBar.Size = UDim2.new(0, 60, 1, 0)
@@ -89,7 +81,6 @@ SideBarLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 SideBarLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 SideBarLayout.Padding = UDim.new(0, 30)
 
--- 5. Правое окно контента (MainFrame)
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(1, -75, 1, 0)
@@ -110,7 +101,6 @@ MainPadding.PaddingRight = UDim.new(0, 10)
 MainPadding.PaddingBottom = UDim.new(0, 20)
 MainPadding.Parent = MainFrame
 
--- 6. Вкладка Главная (HomeTab)
 local HomeTab = Instance.new("CanvasGroup")
 HomeTab.Name = "HomeTab"
 HomeTab.Size = UDim2.new(1, 0, 1, 0)
@@ -118,7 +108,6 @@ HomeTab.BackgroundTransparency = 1
 HomeTab.GroupTransparency = 0
 HomeTab.Parent = MainFrame
 
--- Скролл-список для скриптов
 local ScriptScroll = Instance.new("ScrollingFrame")
 ScriptScroll.Name = "ScriptScroll"
 ScriptScroll.Size = UDim2.new(1, 0, 1, 0)
@@ -135,7 +124,6 @@ ScrollLayout.Parent = ScriptScroll
 ScrollLayout.SortOrder = Enum.SortOrder.LayoutOrder
 ScrollLayout.Padding = UDim.new(0, 12)
 
--- Вкладка Настройки (SettingsTab)
 local SettingsTab = Instance.new("CanvasGroup")
 SettingsTab.Name = "SettingsTab"
 SettingsTab.Size = UDim2.new(1, 0, 1, 0)
@@ -181,7 +169,6 @@ ResizeBtn.MouseButton1Click:Connect(function()
     }):Play()
 end)
 
--- Переключение вкладок
 local currentTab = HomeTab
 local function switchTab(toTab)
     if currentTab == toTab then return end
@@ -197,7 +184,6 @@ local function switchTab(toTab)
     end)
 end
 
--- Закрытие хаба
 local function closeHub(onComplete)
     local tween = TweenService:Create(Container, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
         Size = UDim2.new(0, 0, 0, 0),
@@ -210,7 +196,6 @@ local function closeHub(onComplete)
     end)
 end
 
--- Кнопки навигации Sidebar
 local function createNavButton(iconFileName, layoutOrder, onClick)
     local btn = Instance.new("ImageButton")
     btn.Size = UDim2.new(0, 32, 0, 32)
@@ -238,12 +223,9 @@ createNavButton("home.png", 1, function() switchTab(HomeTab) end)
 createNavButton("settings.png", 2, function() switchTab(SettingsTab) end)
 createNavButton("exit.png", 3, function() closeHub() end)
 
--- Хранилище созданных карточек (для исключения дубликатов)
 local loadedScripts = {}
 
--- Создание элемента скрипта
 local function createScriptCard(fileName, scriptUrl)
-    -- 🛑 Игнорируем HUB.lua и любые файлы, содержащие HUB в названии
     if fileName:lower():find("hub") then
         return
     end
@@ -277,7 +259,6 @@ local function createScriptCard(fileName, scriptUrl)
         }):Play()
     end)
 
-    -- Форматирование названия ("Fly_KT.lua" -> "Fly KT")
     local cleanTitle = fileName:gsub("%.lua$", ""):gsub("_", " ")
 
     local TitleLabel = Instance.new("TextLabel")
@@ -291,7 +272,6 @@ local function createScriptCard(fileName, scriptUrl)
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
     TitleLabel.Parent = ScriptItem
 
-    -- Запуск
     StartBtn.MouseButton1Click:Connect(function()
         closeHub(function()
             task.spawn(function()
@@ -311,7 +291,6 @@ local function createScriptCard(fileName, scriptUrl)
     end)
 end
 
--- 🔄 Трехуровневая система загрузки списка скриптов
 local function loadAllScripts()
     local defaultScripts = {
         "Universal_script.lua",
@@ -319,7 +298,6 @@ local function loadAllScripts()
     }
 
     task.spawn(function()
-        -- Способ 1: Прямой парсинг HTML страницы папки
         local htmlSuccess, htmlContent = pcall(function()
             return game:HttpGet(REPO_TREE .. "?t=" .. tostring(tick()), true)
         end)
@@ -333,7 +311,6 @@ local function loadAllScripts()
             end
         end
 
-        -- Способ 2: Запрос к API GitHub
         local apiSuccess, apiContent = pcall(function()
             return game:HttpGet(API_SCRIPTS .. "?t=" .. tostring(tick()), true)
         end)
@@ -349,7 +326,6 @@ local function loadAllScripts()
             end
         end
 
-        -- Способ 3: Подгрузка из гарантированного списка
         for _, fileName in ipairs(defaultScripts) do
             createScriptCard(fileName, RAW_BASE .. "scripts/" .. fileName)
         end
@@ -358,7 +334,6 @@ end
 
 loadAllScripts()
 
--- 🚀 Появление окна
 TweenService:Create(Container, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
     Size = targetSize,
     Position = targetPos
