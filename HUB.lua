@@ -1,5 +1,6 @@
--- 📌 Kraken Script Hub (Liquid Glass + Direct PNG Image Render)
+-- 📌 Kraken Script Hub (Dynamic GitHub Lua Script Loader)
 local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -7,11 +8,10 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 -- 🔗 Ссылки на GitHub
 local RAW_BASE = "https://raw.githubusercontent.com/kryytoi/KrakenTeamScript/main/"
 local ICONS_BASE = RAW_BASE .. "icons/"
-local SCRIPTS_BASE = RAW_BASE .. "scripts/"
+local API_SCRIPTS = "https://api.github.com/repos/kryytoi/KrakenTeamScript/contents/scripts"
 
--- Загрузка онлайн-картинок с обходом кэша GitHub CDN
+-- Загрузка онлайн-картинок с обходом кэша
 local function getOnlineImage(fileName)
-    -- Добавляем метку времени, чтобы GitHub не отдавал застрявший в кэше файл
     local url = ICONS_BASE .. fileName .. "?nocache=" .. tostring(tick())
     local assetPath = "kraken_v7_" .. fileName
 
@@ -56,7 +56,7 @@ Container.Parent = ScreenGui
 local targetSize = UDim2.new(0, 520, 0, 270)
 local targetPos = UDim2.new(0.5, -260, 0.5, -110)
 
--- 3. Картинка KTHUB.png (Рендерится аналогично home.png)
+-- 3. Картинка KTHUB.png
 local KTHubLogo = Instance.new("ImageLabel")
 KTHubLogo.Name = "KTHubLogo"
 KTHubLogo.Size = UDim2.new(0, 320, 0, 90)
@@ -105,11 +105,11 @@ MainCorner.Parent = MainFrame
 local MainPadding = Instance.new("UIPadding")
 MainPadding.PaddingTop = UDim.new(0, 20)
 MainPadding.PaddingLeft = UDim.new(0, 25)
-MainPadding.PaddingRight = UDim.new(0, 20)
+MainPadding.PaddingRight = UDim.new(0, 15)
 MainPadding.PaddingBottom = UDim.new(0, 20)
 MainPadding.Parent = MainFrame
 
--- 6. Вкладки (CanvasGroup)
+-- 6. Вкладка Главная (HomeTab)
 local HomeTab = Instance.new("CanvasGroup")
 HomeTab.Name = "HomeTab"
 HomeTab.Size = UDim2.new(1, 0, 1, 0)
@@ -117,6 +117,26 @@ HomeTab.BackgroundTransparency = 1
 HomeTab.GroupTransparency = 0
 HomeTab.Parent = MainFrame
 
+-- Скролл-список для скриптов
+local ScriptScroll = Instance.new("ScrollingFrame")
+ScriptScroll.Name = "ScriptScroll"
+ScriptScroll.Size = UDim2.new(1, 0, 1, 0)
+ScriptScroll.BackgroundTransparency = 1
+ScriptScroll.BorderSizePixel = 0
+ScriptScroll.ScrollBarThickness = 3
+ScriptScroll.ScrollBarImageColor3 = Color3.fromRGB(120, 40, 180)
+ScriptScroll.Parent = HomeTab
+
+local ScrollLayout = Instance.new("UIListLayout")
+ScrollLayout.Parent = ScriptScroll
+ScrollLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ScrollLayout.Padding = UDim.new(0, 10)
+
+ScrollLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    ScriptScroll.CanvasSize = UDim2.new(0, 0, 0, ScrollLayout.AbsoluteContentSize.Y + 10)
+end)
+
+-- Вкладка Настройки (SettingsTab)
 local SettingsTab = Instance.new("CanvasGroup")
 SettingsTab.Name = "SettingsTab"
 SettingsTab.Size = UDim2.new(1, 0, 1, 0)
@@ -125,7 +145,6 @@ SettingsTab.GroupTransparency = 1
 SettingsTab.Visible = false
 SettingsTab.Parent = MainFrame
 
--- Настройки
 local SettingsTitle = Instance.new("TextLabel")
 SettingsTitle.Size = UDim2.new(1, 0, 0, 30)
 SettingsTitle.BackgroundTransparency = 1
@@ -163,7 +182,7 @@ ResizeBtn.MouseButton1Click:Connect(function()
     }):Play()
 end)
 
--- Навигация по вкладкам
+-- Переключение вкладок
 local currentTab = HomeTab
 local function switchTab(toTab)
     if currentTab == toTab then return end
@@ -192,7 +211,7 @@ local function closeHub(onComplete)
     end)
 end
 
--- Кнопки боковой панели
+-- Кнопки навигации Sidebar
 local function createNavButton(iconFileName, layoutOrder, onClick)
     local btn = Instance.new("ImageButton")
     btn.Size = UDim2.new(0, 32, 0, 32)
@@ -220,62 +239,100 @@ createNavButton("home.png", 1, function() switchTab(HomeTab) end)
 createNavButton("settings.png", 2, function() switchTab(SettingsTab) end)
 createNavButton("exit.png", 3, function() closeHub() end)
 
--- Элемент Universal Script
-local ScriptItem = Instance.new("Frame")
-ScriptItem.Size = UDim2.new(1, 0, 0, 40)
-ScriptItem.Position = UDim2.new(0, 0, 0, 10)
-ScriptItem.BackgroundTransparency = 1
-ScriptItem.Parent = HomeTab
+-- Создание карточки скрипта
+local function createScriptCard(fileName, scriptUrl)
+    local ScriptItem = Instance.new("Frame")
+    ScriptItem.Size = UDim2.new(1, -10, 0, 40)
+    ScriptItem.BackgroundTransparency = 1
+    ScriptItem.Parent = ScriptScroll
 
-local StartBtn = Instance.new("ImageButton")
-StartBtn.Size = UDim2.new(0, 38, 0, 38)
-StartBtn.Position = UDim2.new(0, 0, 0, 0)
-StartBtn.BackgroundTransparency = 1
-StartBtn.Image = getOnlineImage("start.png")
-StartBtn.Parent = ScriptItem
+    local StartBtn = Instance.new("ImageButton")
+    StartBtn.Size = UDim2.new(0, 38, 0, 38)
+    StartBtn.Position = UDim2.new(0, 0, 0, 0)
+    StartBtn.BackgroundTransparency = 1
+    StartBtn.Image = getOnlineImage("start.png")
+    StartBtn.Parent = ScriptItem
 
-StartBtn.MouseEnter:Connect(function()
-    TweenService:Create(StartBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 44, 0, 44),
-        Position = UDim2.new(0, -3, 0, -3)
-    }):Play()
-end)
-StartBtn.MouseLeave:Connect(function()
-    TweenService:Create(StartBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 38, 0, 38),
-        Position = UDim2.new(0, 0, 0, 0)
-    }):Play()
-end)
+    StartBtn.MouseEnter:Connect(function()
+        TweenService:Create(StartBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 44, 0, 44),
+            Position = UDim2.new(0, -3, 0, -3)
+        }):Play()
+    end)
+    StartBtn.MouseLeave:Connect(function()
+        TweenService:Create(StartBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 38, 0, 38),
+            Position = UDim2.new(0, 0, 0, 0)
+        }):Play()
+    end)
 
-local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Size = UDim2.new(1, -60, 1, 0)
-TitleLabel.Position = UDim2.new(0, 55, 0, 0)
-TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "Universal Script"
-TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TitleLabel.TextSize = 22
-TitleLabel.Font = Enum.Font.SourceSans
-TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-TitleLabel.Parent = ScriptItem
+    -- Красивый заголовок из имени файла (например: "Fly_KT.lua" -> "Fly KT")
+    local cleanTitle = fileName:gsub("%.lua$", ""):gsub("_", " ")
 
--- Запуск скрипта
-StartBtn.MouseButton1Click:Connect(function()
-    local scriptUrl = SCRIPTS_BASE .. "Universal_script.lua"
-    
-    closeHub(function()
-        task.spawn(function()
-            local success, err = pcall(function()
-                local code = game:HttpGet(scriptUrl, true)
-                loadstring(code)()
+    local TitleLabel = Instance.new("TextLabel")
+    TitleLabel.Size = UDim2.new(1, -60, 1, 0)
+    TitleLabel.Position = UDim2.new(0, 55, 0, 0)
+    TitleLabel.BackgroundTransparency = 1
+    TitleLabel.Text = cleanTitle
+    TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TitleLabel.TextSize = 20
+    TitleLabel.Font = Enum.Font.SourceSans
+    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLabel.Parent = ScriptItem
+
+    -- Запуск выбранного скрипта
+    StartBtn.MouseButton1Click:Connect(function()
+        closeHub(function()
+            task.spawn(function()
+                local success, err = pcall(function()
+                    local code = game:HttpGet(scriptUrl .. "?nocache=" .. tostring(tick()), true)
+                    loadstring(code)()
+                end)
+                if not success then
+                    warn("[Kraken Hub]: Ошибка запуска " .. fileName .. " -> " .. tostring(err))
+                end
             end)
-            if not success then
-                warn("[Kraken Hub]: Ошибка запуска -> " .. tostring(err))
-            end
         end)
     end)
-end)
+end
 
--- 🚀 Запуск анимации окна
+-- Динамическое получение всех .lua файлов из папки scripts через GitHub API
+local function loadScriptsFromGitHub()
+    task.spawn(function()
+        local apiUrl = API_SCRIPTS .. "?nocache=" .. tostring(tick())
+        local success, response = pcall(function()
+            return game:HttpGet(apiUrl, true)
+        end)
+
+        if success and response then
+            local decodeSuccess, items = pcall(function()
+                return HttpService:JSONDecode(response)
+            end)
+
+            if decodeSuccess and type(items) == "table" then
+                local foundAny = false
+                for _, item in ipairs(items) do
+                    -- Берем только файлы с расширением .lua
+                    if item.type == "file" and string.sub(item.name:lower(), -4) == ".lua" then
+                        foundAny = true
+                        local downloadUrl = item.download_url or (RAW_BASE .. "scripts/" .. item.name)
+                        createScriptCard(item.name, downloadUrl)
+                    end
+                end
+
+                if foundAny then return end
+            end
+        end
+
+        -- Запасной вариант (если API отработает со сбоем)
+        createScriptCard("Universal_script.lua", RAW_BASE .. "scripts/Universal_script.lua")
+        createScriptCard("Fly_KT.lua", RAW_BASE .. "scripts/Fly_KT.lua")
+    end)
+end
+
+loadScriptsFromGitHub()
+
+-- 🚀 Анимация появления окна
 TweenService:Create(Container, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
     Size = targetSize,
     Position = targetPos
