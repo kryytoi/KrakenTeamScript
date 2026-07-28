@@ -1,4 +1,4 @@
--- 📌 Kraken Script Hub (Liquid Glass + Exact Image Rendering for KTHUB)
+-- 📌 Kraken Script Hub (Liquid Glass + Direct PNG Image Render)
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -9,22 +9,22 @@ local RAW_BASE = "https://raw.githubusercontent.com/kryytoi/KrakenTeamScript/mai
 local ICONS_BASE = RAW_BASE .. "icons/"
 local SCRIPTS_BASE = RAW_BASE .. "scripts/"
 
--- Исправленная загрузка картинок (с гарантированной очисткой плохого кэша)
+-- Загрузка онлайн-картинок с обходом кэша GitHub CDN
 local function getOnlineImage(fileName)
-    local url = ICONS_BASE .. fileName
-    local assetPath = "kraken_v5_" .. fileName -- Новый префикс для обхода старого кэша
+    -- Добавляем метку времени, чтобы GitHub не отдавал застрявший в кэше файл
+    local url = ICONS_BASE .. fileName .. "?nocache=" .. tostring(tick())
+    local assetPath = "kraken_v7_" .. fileName
+
+    if isfile and isfile(assetPath) and getcustomasset then
+        return getcustomasset(assetPath)
+    end
 
     if writefile and getcustomasset then
-        -- Проверяем, существует ли файл и не пустой ли он
-        if isfile and isfile(assetPath) then
-            return getcustomasset(assetPath)
-        end
-
         local success, content = pcall(function()
             return game:HttpGet(url, true)
         end)
 
-        if success and type(content) == "string" and #content > 100 then
+        if success and type(content) == "string" and #content > 50 then
             pcall(writefile, assetPath, content)
             return getcustomasset(assetPath)
         end
@@ -33,7 +33,7 @@ local function getOnlineImage(fileName)
     return url
 end
 
--- Удаляем предыдущий GUI при перезапуске
+-- Удаляем предыдущую версию GUI
 if PlayerGui:FindFirstChild("KrakenScriptHub") then
     PlayerGui.KrakenScriptHub:Destroy()
 end
@@ -50,20 +50,21 @@ Container.Name = "Container"
 Container.Size = UDim2.new(0, 0, 0, 0)
 Container.Position = UDim2.new(0.5, 0, 0.5, 0)
 Container.BackgroundTransparency = 1
-Container.ClipsDescendants = false -- Чтобы логотип выходил за верхнюю границу
+Container.ClipsDescendants = false
 Container.Parent = ScreenGui
 
 local targetSize = UDim2.new(0, 520, 0, 270)
 local targetPos = UDim2.new(0.5, -260, 0.5, -110)
 
--- 3. Логотип KTHUB.png (Рендерится один в один как home.png)
+-- 3. Картинка KTHUB.png (Рендерится аналогично home.png)
 local KTHubLogo = Instance.new("ImageLabel")
 KTHubLogo.Name = "KTHubLogo"
-KTHubLogo.Size = UDim2.new(0, 320, 0, 85)
-KTHubLogo.Position = UDim2.new(0.5, -160, 0, -80)
+KTHubLogo.Size = UDim2.new(0, 320, 0, 90)
+KTHubLogo.Position = UDim2.new(0.5, -160, 0, -85)
 KTHubLogo.BackgroundTransparency = 1
 KTHubLogo.ScaleType = Enum.ScaleType.Fit
 KTHubLogo.Image = getOnlineImage("KTHUB.png")
+KTHubLogo.ZIndex = 10
 KTHubLogo.Parent = Container
 
 -- 4. Левая панель (Sidebar)
@@ -124,7 +125,7 @@ SettingsTab.GroupTransparency = 1
 SettingsTab.Visible = false
 SettingsTab.Parent = MainFrame
 
--- Вкладка Настройки
+-- Настройки
 local SettingsTitle = Instance.new("TextLabel")
 SettingsTitle.Size = UDim2.new(1, 0, 0, 30)
 SettingsTitle.BackgroundTransparency = 1
@@ -162,7 +163,7 @@ ResizeBtn.MouseButton1Click:Connect(function()
     }):Play()
 end)
 
--- Переключение вкладок
+-- Навигация по вкладкам
 local currentTab = HomeTab
 local function switchTab(toTab)
     if currentTab == toTab then return end
@@ -191,7 +192,7 @@ local function closeHub(onComplete)
     end)
 end
 
--- Навигация
+-- Кнопки боковой панели
 local function createNavButton(iconFileName, layoutOrder, onClick)
     local btn = Instance.new("ImageButton")
     btn.Size = UDim2.new(0, 32, 0, 32)
@@ -219,7 +220,7 @@ createNavButton("home.png", 1, function() switchTab(HomeTab) end)
 createNavButton("settings.png", 2, function() switchTab(SettingsTab) end)
 createNavButton("exit.png", 3, function() closeHub() end)
 
--- Universal Script
+-- Элемент Universal Script
 local ScriptItem = Instance.new("Frame")
 ScriptItem.Size = UDim2.new(1, 0, 0, 40)
 ScriptItem.Position = UDim2.new(0, 0, 0, 10)
