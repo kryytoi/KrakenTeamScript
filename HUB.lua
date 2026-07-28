@@ -1,4 +1,4 @@
--- 📌 Kraken Script Hub (Dynamic GitHub Lua Script Loader)
+-- 📌 Kraken Script Hub (Multi-Source Dynamic Script Loader with Filter)
 local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
@@ -8,6 +8,7 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 -- 🔗 Ссылки на GitHub
 local RAW_BASE = "https://raw.githubusercontent.com/kryytoi/KrakenTeamScript/main/"
 local ICONS_BASE = RAW_BASE .. "icons/"
+local REPO_TREE = "https://github.com/kryytoi/KrakenTeamScript/tree/main/scripts"
 local API_SCRIPTS = "https://api.github.com/repos/kryytoi/KrakenTeamScript/contents/scripts"
 
 -- Загрузка онлайн-картинок с обходом кэша
@@ -105,7 +106,7 @@ MainCorner.Parent = MainFrame
 local MainPadding = Instance.new("UIPadding")
 MainPadding.PaddingTop = UDim.new(0, 20)
 MainPadding.PaddingLeft = UDim.new(0, 25)
-MainPadding.PaddingRight = UDim.new(0, 15)
+MainPadding.PaddingRight = UDim.new(0, 10)
 MainPadding.PaddingBottom = UDim.new(0, 20)
 MainPadding.Parent = MainFrame
 
@@ -123,18 +124,16 @@ ScriptScroll.Name = "ScriptScroll"
 ScriptScroll.Size = UDim2.new(1, 0, 1, 0)
 ScriptScroll.BackgroundTransparency = 1
 ScriptScroll.BorderSizePixel = 0
-ScriptScroll.ScrollBarThickness = 3
-ScriptScroll.ScrollBarImageColor3 = Color3.fromRGB(120, 40, 180)
+ScriptScroll.ScrollBarThickness = 4
+ScriptScroll.ScrollBarImageColor3 = Color3.fromRGB(140, 50, 200)
+ScriptScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+ScriptScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 ScriptScroll.Parent = HomeTab
 
 local ScrollLayout = Instance.new("UIListLayout")
 ScrollLayout.Parent = ScriptScroll
 ScrollLayout.SortOrder = Enum.SortOrder.LayoutOrder
-ScrollLayout.Padding = UDim.new(0, 10)
-
-ScrollLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    ScriptScroll.CanvasSize = UDim2.new(0, 0, 0, ScrollLayout.AbsoluteContentSize.Y + 10)
-end)
+ScrollLayout.Padding = UDim.new(0, 12)
 
 -- Вкладка Настройки (SettingsTab)
 local SettingsTab = Instance.new("CanvasGroup")
@@ -239,10 +238,22 @@ createNavButton("home.png", 1, function() switchTab(HomeTab) end)
 createNavButton("settings.png", 2, function() switchTab(SettingsTab) end)
 createNavButton("exit.png", 3, function() closeHub() end)
 
--- Создание карточки скрипта
+-- Хранилище созданных карточек (для исключения дубликатов)
+local loadedScripts = {}
+
+-- Создание элемента скрипта
 local function createScriptCard(fileName, scriptUrl)
+    -- 🛑 Игнорируем HUB.lua и любые файлы, содержащие HUB в названии
+    if fileName:lower():find("hub") then
+        return
+    end
+
+    if loadedScripts[fileName] then return end
+    loadedScripts[fileName] = true
+
     local ScriptItem = Instance.new("Frame")
-    ScriptItem.Size = UDim2.new(1, -10, 0, 40)
+    ScriptItem.Name = fileName
+    ScriptItem.Size = UDim2.new(1, -12, 0, 40)
     ScriptItem.BackgroundTransparency = 1
     ScriptItem.Parent = ScriptScroll
 
@@ -266,7 +277,7 @@ local function createScriptCard(fileName, scriptUrl)
         }):Play()
     end)
 
-    -- Красивый заголовок из имени файла (например: "Fly_KT.lua" -> "Fly KT")
+    -- Форматирование названия ("Fly_KT.lua" -> "Fly KT")
     local cleanTitle = fileName:gsub("%.lua$", ""):gsub("_", " ")
 
     local TitleLabel = Instance.new("TextLabel")
@@ -280,12 +291,16 @@ local function createScriptCard(fileName, scriptUrl)
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
     TitleLabel.Parent = ScriptItem
 
-    -- Запуск выбранного скрипта
+    -- Запуск
     StartBtn.MouseButton1Click:Connect(function()
         closeHub(function()
             task.spawn(function()
                 local success, err = pcall(function()
-                    local code = game:HttpGet(scriptUrl .. "?nocache=" .. tostring(tick()), true)
+                    local fullUrl = scriptUrl
+                    if not fullUrl:find("%?") then
+                        fullUrl = fullUrl .. "?nocache=" .. tostring(tick())
+                    end
+                    local code = game:HttpGet(fullUrl, true)
                     loadstring(code)()
                 end)
                 if not success then
@@ -296,43 +311,54 @@ local function createScriptCard(fileName, scriptUrl)
     end)
 end
 
--- Динамическое получение всех .lua файлов из папки scripts через GitHub API
-local function loadScriptsFromGitHub()
+-- 🔄 Трехуровневая система загрузки списка скриптов
+local function loadAllScripts()
+    local defaultScripts = {
+        "Universal_script.lua",
+        "Fly_KT.lua"
+    }
+
     task.spawn(function()
-        local apiUrl = API_SCRIPTS .. "?nocache=" .. tostring(tick())
-        local success, response = pcall(function()
-            return game:HttpGet(apiUrl, true)
+        -- Способ 1: Прямой парсинг HTML страницы папки
+        local htmlSuccess, htmlContent = pcall(function()
+            return game:HttpGet(REPO_TREE .. "?t=" .. tostring(tick()), true)
         end)
 
-        if success and response then
-            local decodeSuccess, items = pcall(function()
-                return HttpService:JSONDecode(response)
-            end)
-
-            if decodeSuccess and type(items) == "table" then
-                local foundAny = false
-                for _, item in ipairs(items) do
-                    -- Берем только файлы с расширением .lua
-                    if item.type == "file" and string.sub(item.name:lower(), -4) == ".lua" then
-                        foundAny = true
-                        local downloadUrl = item.download_url or (RAW_BASE .. "scripts/" .. item.name)
-                        createScriptCard(item.name, downloadUrl)
-                    end
-                end
-
-                if foundAny then return end
+        if htmlSuccess and type(htmlContent) == "string" then
+            for file in string.gmatch(htmlContent, 'scripts/([%w_%-%.]+%.lua)') do
+                createScriptCard(file, RAW_BASE .. "scripts/" .. file)
+            end
+            for file in string.gmatch(htmlContent, '"name":"([%w_%-%.]+%.lua)"') do
+                createScriptCard(file, RAW_BASE .. "scripts/" .. file)
             end
         end
 
-        -- Запасной вариант (если API отработает со сбоем)
-        createScriptCard("Universal_script.lua", RAW_BASE .. "scripts/Universal_script.lua")
-        createScriptCard("Fly_KT.lua", RAW_BASE .. "scripts/Fly_KT.lua")
+        -- Способ 2: Запрос к API GitHub
+        local apiSuccess, apiContent = pcall(function()
+            return game:HttpGet(API_SCRIPTS .. "?t=" .. tostring(tick()), true)
+        end)
+
+        if apiSuccess and type(apiContent) == "string" then
+            local decodeOk, items = pcall(function() return HttpService:JSONDecode(apiContent) end)
+            if decodeOk and type(items) == "table" then
+                for _, item in ipairs(items) do
+                    if item.type == "file" and string.sub(item.name:lower(), -4) == ".lua" then
+                        createScriptCard(item.name, item.download_url or (RAW_BASE .. "scripts/" .. item.name))
+                    end
+                end
+            end
+        end
+
+        -- Способ 3: Подгрузка из гарантированного списка
+        for _, fileName in ipairs(defaultScripts) do
+            createScriptCard(fileName, RAW_BASE .. "scripts/" .. fileName)
+        end
     end)
 end
 
-loadScriptsFromGitHub()
+loadAllScripts()
 
--- 🚀 Анимация появления окна
+-- 🚀 Появление окна
 TweenService:Create(Container, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
     Size = targetSize,
     Position = targetPos
