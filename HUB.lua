@@ -1,4 +1,4 @@
--- 📌 Kraken Script Hub (Liquid Glass + Animations & Guaranteed KTHUB Text)
+-- 📌 Kraken Script Hub (Liquid Glass + Exact KTHUB Logo Image)
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -9,24 +9,28 @@ local RAW_BASE = "https://raw.githubusercontent.com/kryytoi/KrakenTeamScript/mai
 local ICONS_BASE = RAW_BASE .. "icons/"
 local SCRIPTS_BASE = RAW_BASE .. "scripts/"
 
--- Функция загрузки онлайн-картинок с кэшированием
+-- Надежная функция для загрузки PNG-картинок через кэш инжектора
 local function getOnlineImage(fileName)
     local url = ICONS_BASE .. fileName
+    local assetPath = "kraken_hub_" .. fileName
+
+    if isfile and isfile(assetPath) and getcustomasset then
+        return getcustomasset(assetPath)
+    end
+
     if writefile and getcustomasset then
         local success, result = pcall(function()
-            local assetPath = "kraken_hub_" .. fileName
-            if not isfile or not isfile(assetPath) then
-                local content = game:HttpGet(url)
-                writefile(assetPath, content)
-            end
+            local content = game:HttpGet(url)
+            writefile(assetPath, content)
             return getcustomasset(assetPath)
         end)
-        if success then return result end
+        if success and result then return result end
     end
+
     return url
 end
 
--- Удаляем предыдущую версию GUI
+-- Удаляем прошлую версию GUI
 if PlayerGui:FindFirstChild("KrakenScriptHub") then
     PlayerGui.KrakenScriptHub:Destroy()
 end
@@ -43,45 +47,21 @@ Container.Name = "Container"
 Container.Size = UDim2.new(0, 0, 0, 0)
 Container.Position = UDim2.new(0.5, 0, 0.5, 0)
 Container.BackgroundTransparency = 1
-Container.ClipsDescendants = false -- Позволяет надписи выходить за пределы окна сверху
+Container.ClipsDescendants = false
 Container.Parent = ScreenGui
 
 local targetSize = UDim2.new(0, 520, 0, 270)
 local targetPos = UDim2.new(0.5, -260, 0.5, -110)
 
--- 3. Верхняя шапка с логотипом KT HUB (100% видимость)
-local HeaderTitle = Instance.new("Frame")
-HeaderTitle.Name = "HeaderTitle"
-HeaderTitle.Size = UDim2.new(1, 0, 0, 50)
-HeaderTitle.Position = UDim2.new(0, 0, 0, -60)
-HeaderTitle.BackgroundTransparency = 1
-HeaderTitle.Parent = Container
-
--- А. Гарантированный готический текст KT HUB
-local TextLogo = Instance.new("TextLabel")
-TextLogo.Name = "TextLogo"
-TextLogo.Size = UDim2.new(1, 0, 1, 0)
-TextLogo.BackgroundTransparency = 1
-TextLogo.Text = "KT HUB"
-TextLogo.TextColor3 = Color3.fromRGB(168, 50, 235)
-TextLogo.TextSize = 42
-TextLogo.Font = Enum.Font.Fondamento -- Красивый готический стиль
-TextLogo.Parent = HeaderTitle
-
-local TextStroke = Instance.new("UIStroke")
-TextStroke.Thickness = 3
-TextStroke.Color = Color3.fromRGB(15, 0, 30)
-TextStroke.Parent = TextLogo
-
--- Б. Изображение KTHUB.png из GitHub (если поддерживается инжектором)
-local ImageLogo = Instance.new("ImageLabel")
-ImageLogo.Name = "ImageLogo"
-ImageLogo.Size = UDim2.new(1, 0, 1, 0)
-ImageLogo.BackgroundTransparency = 1
-ImageLogo.ScaleType = Enum.ScaleType.Fit
-ImageLogo.Image = getOnlineImage("KTHUB.png")
-ImageLogo.ZIndex = 2
-ImageLogo.Parent = HeaderTitle
+-- 3. Оригинальный Логотип KTHUB.png (Только картинка, без стандартных шрифтов)
+local LogoImage = Instance.new("ImageLabel")
+LogoImage.Name = "LogoImage"
+LogoImage.Size = UDim2.new(0, 320, 0, 85)
+LogoImage.Position = UDim2.new(0.5, -160, 0, -75)
+LogoImage.BackgroundTransparency = 1
+LogoImage.ScaleType = Enum.ScaleType.Fit
+LogoImage.Image = getOnlineImage("KTHUB.png")
+LogoImage.Parent = Container
 
 -- 4. Левая панель (Sidebar)
 local SideBar = Instance.new("Frame")
@@ -141,7 +121,7 @@ SettingsTab.GroupTransparency = 1
 SettingsTab.Visible = false
 SettingsTab.Parent = MainFrame
 
--- Настройки в вкладке Settings
+-- Настройки
 local SettingsTitle = Instance.new("TextLabel")
 SettingsTitle.Size = UDim2.new(1, 0, 0, 30)
 SettingsTitle.BackgroundTransparency = 1
@@ -208,7 +188,7 @@ local function closeHub(onComplete)
     end)
 end
 
--- Кнопки левой панели
+-- Кнопки навигации
 local function createNavButton(iconFileName, layoutOrder, onClick)
     local btn = Instance.new("ImageButton")
     btn.Size = UDim2.new(0, 32, 0, 32)
@@ -236,7 +216,7 @@ createNavButton("home.png", 1, function() switchTab(HomeTab) end)
 createNavButton("settings.png", 2, function() switchTab(SettingsTab) end)
 createNavButton("exit.png", 3, function() closeHub() end)
 
--- Строка скрипта Universal Script
+-- Элемент скрипта Universal Script
 local ScriptItem = Instance.new("Frame")
 ScriptItem.Size = UDim2.new(1, 0, 0, 40)
 ScriptItem.Position = UDim2.new(0, 0, 0, 10)
@@ -274,7 +254,7 @@ TitleLabel.Font = Enum.Font.SourceSans
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 TitleLabel.Parent = ScriptItem
 
--- Запуск
+-- Запуск скрипта при клике
 StartBtn.MouseButton1Click:Connect(function()
     local scriptUrl = SCRIPTS_BASE .. "Universal_script.lua"
     
@@ -291,7 +271,7 @@ StartBtn.MouseButton1Click:Connect(function()
     end)
 end)
 
--- 🚀 Плавный анимационный запуск UI
+-- 🚀 Анимация появления хаба
 TweenService:Create(Container, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
     Size = targetSize,
     Position = targetPos
