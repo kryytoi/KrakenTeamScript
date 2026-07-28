@@ -9,6 +9,10 @@ local ICONS_BASE = RAW_BASE .. "icons/"
 local REPO_TREE = "https://github.com/kryytoi/KrakenTeamScript/tree/main/scripts"
 local API_SCRIPTS = "https://api.github.com/repos/kryytoi/KrakenTeamScript/contents/scripts"
 
+local SBORKS_RAW = RAW_BASE .. "sborks/"
+local SBORKS_TREE = "https://github.com/kryytoi/KrakenTeamScript/tree/main/sborks"
+local SBORKS_API = "https://api.github.com/repos/kryytoi/KrakenTeamScript/contents/sborks"
+
 local function getOnlineImage(fileName)
     local url = ICONS_BASE .. fileName .. "?nocache=" .. tostring(tick())
     local assetPath = "kraken_v7_" .. fileName
@@ -79,7 +83,7 @@ SideBarLayout.Parent = SideBar
 SideBarLayout.SortOrder = Enum.SortOrder.LayoutOrder
 SideBarLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 SideBarLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-SideBarLayout.Padding = UDim.new(0, 30)
+SideBarLayout.Padding = UDim.new(0, 20)
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
@@ -123,6 +127,30 @@ local ScrollLayout = Instance.new("UIListLayout")
 ScrollLayout.Parent = ScriptScroll
 ScrollLayout.SortOrder = Enum.SortOrder.LayoutOrder
 ScrollLayout.Padding = UDim.new(0, 12)
+
+local SborkaTab = Instance.new("CanvasGroup")
+SborkaTab.Name = "SborkaTab"
+SborkaTab.Size = UDim2.new(1, 0, 1, 0)
+SborkaTab.BackgroundTransparency = 1
+SborkaTab.GroupTransparency = 1
+SborkaTab.Visible = false
+SborkaTab.Parent = MainFrame
+
+local SborkaScroll = Instance.new("ScrollingFrame")
+SborkaScroll.Name = "SborkaScroll"
+SborkaScroll.Size = UDim2.new(1, 0, 1, 0)
+SborkaScroll.BackgroundTransparency = 1
+SborkaScroll.BorderSizePixel = 0
+SborkaScroll.ScrollBarThickness = 4
+SborkaScroll.ScrollBarImageColor3 = Color3.fromRGB(140, 50, 200)
+SborkaScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+SborkaScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+SborkaScroll.Parent = SborkaTab
+
+local SborkaLayout = Instance.new("UIListLayout")
+SborkaLayout.Parent = SborkaScroll
+SborkaLayout.SortOrder = Enum.SortOrder.LayoutOrder
+SborkaLayout.Padding = UDim.new(0, 12)
 
 local SettingsTab = Instance.new("CanvasGroup")
 SettingsTab.Name = "SettingsTab"
@@ -220,8 +248,9 @@ local function createNavButton(iconFileName, layoutOrder, onClick)
 end
 
 createNavButton("home.png", 1, function() switchTab(HomeTab) end)
-createNavButton("settings.png", 2, function() switchTab(SettingsTab) end)
-createNavButton("exit.png", 3, function() closeHub() end)
+createNavButton("sborka.png", 2, function() switchTab(SborkaTab) end)
+createNavButton("settings.png", 3, function() switchTab(SettingsTab) end)
+createNavButton("exit.png", 4, function() closeHub() end)
 
 local loadedScripts = {}
 
@@ -291,6 +320,102 @@ local function createScriptCard(fileName, scriptUrl)
     end)
 end
 
+local loadedSborks = {}
+
+local function createSborkaCard(folderName, luaFiles, descUrl)
+    if loadedSborks[folderName] then return end
+    loadedSborks[folderName] = true
+
+    local SborkaItem = Instance.new("Frame")
+    SborkaItem.Name = folderName
+    SborkaItem.Size = UDim2.new(1, -12, 0, 65)
+    SborkaItem.BackgroundColor3 = Color3.fromRGB(10, 10, 12)
+    SborkaItem.BackgroundTransparency = 0.3
+    SborkaItem.Parent = SborkaScroll
+
+    local ItemCorner = Instance.new("UICorner")
+    ItemCorner.CornerRadius = UDim.new(0, 14)
+    ItemCorner.Parent = SborkaItem
+
+    local ItemPadding = Instance.new("UIPadding")
+    ItemPadding.PaddingTop = UDim.new(0, 10)
+    ItemPadding.PaddingBottom = UDim.new(0, 10)
+    ItemPadding.PaddingLeft = UDim.new(0, 15)
+    ItemPadding.PaddingRight = UDim.new(0, 15)
+    ItemPadding.Parent = SborkaItem
+
+    local TitleLabel = Instance.new("TextLabel")
+    TitleLabel.Size = UDim2.new(1, -60, 0, 22)
+    TitleLabel.Position = UDim2.new(0, 0, 0, 0)
+    TitleLabel.BackgroundTransparency = 1
+    TitleLabel.Text = folderName
+    TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TitleLabel.TextSize = 20
+    TitleLabel.Font = Enum.Font.SourceSansBold
+    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLabel.Parent = SborkaItem
+
+    local DescLabel = Instance.new("TextLabel")
+    DescLabel.Size = UDim2.new(1, -60, 0, 20)
+    DescLabel.Position = UDim2.new(0, 0, 0, 24)
+    DescLabel.BackgroundTransparency = 1
+    DescLabel.Text = "Загрузка..."
+    DescLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+    DescLabel.TextSize = 14
+    DescLabel.Font = Enum.Font.SourceSans
+    DescLabel.TextXAlignment = Enum.TextXAlignment.Left
+    DescLabel.TextTruncate = Enum.TextTruncate.AtEnd
+    DescLabel.Parent = SborkaItem
+
+    task.spawn(function()
+        local success, content = pcall(function()
+            return game:HttpGet(descUrl .. "?nocache=" .. tostring(tick()), true)
+        end)
+        if success and content and #content > 0 then
+            DescLabel.Text = content
+        else
+            DescLabel.Text = "Описание отсутствует"
+        end
+    end)
+
+    local StartBtn = Instance.new("ImageButton")
+    StartBtn.Size = UDim2.new(0, 38, 0, 38)
+    StartBtn.Position = UDim2.new(1, -40, 0.5, -19)
+    StartBtn.BackgroundTransparency = 1
+    StartBtn.Image = getOnlineImage("start.png")
+    StartBtn.Parent = SborkaItem
+
+    StartBtn.MouseEnter:Connect(function()
+        TweenService:Create(StartBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 44, 0, 44),
+            Position = UDim2.new(1, -43, 0.5, -22)
+        }):Play()
+    end)
+    StartBtn.MouseLeave:Connect(function()
+        TweenService:Create(StartBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 38, 0, 38),
+            Position = UDim2.new(1, -40, 0.5, -19)
+        }):Play()
+    end)
+
+    StartBtn.MouseButton1Click:Connect(function()
+        closeHub(function()
+            task.spawn(function()
+                for _, fileUrl in ipairs(luaFiles) do
+                    pcall(function()
+                        local fullUrl = fileUrl
+                        if not fullUrl:find("%?") then
+                            fullUrl = fullUrl .. "?nocache=" .. tostring(tick())
+                        end
+                        local code = game:HttpGet(fullUrl, true)
+                        loadstring(code)()
+                    end)
+                end
+            end)
+        end)
+    end)
+end
+
 local function loadAllScripts()
     local defaultScripts = {
         "Universal_script.lua",
@@ -332,7 +457,79 @@ local function loadAllScripts()
     end)
 end
 
+local function loadAllSborks()
+    local defaultSborks = {
+        {
+            name = "Brookhaven",
+            descUrl = SBORKS_RAW .. "Brookhaven/description.txt",
+            files = {
+                SBORKS_RAW .. "Brookhaven/main.lua",
+                SBORKS_RAW .. "Brookhaven/script.lua"
+            }
+        }
+    }
+
+    task.spawn(function()
+        local apiSuccess, apiContent = pcall(function()
+            return game:HttpGet(SBORKS_API .. "?t=" .. tostring(tick()), true)
+        end)
+
+        if apiSuccess and type(apiContent) == "string" then
+            local decodeOk, items = pcall(function() return HttpService:JSONDecode(apiContent) end)
+            if decodeOk and type(items) == "table" then
+                for _, item in ipairs(items) do
+                    if item.type == "dir" then
+                        local folderName = item.name
+                        local subApi = SBORKS_API .. "/" .. folderName
+                        local luaUrls = {}
+                        local descUrl = SBORKS_RAW .. folderName .. "/description.txt"
+
+                        local subSuccess, subContent = pcall(function()
+                            return game:HttpGet(subApi .. "?t=" .. tostring(tick()), true)
+                        end)
+
+                        if subSuccess and type(subContent) == "string" then
+                            local subDecodeOk, subItems = pcall(function() return HttpService:JSONDecode(subContent) end)
+                            if subDecodeOk and type(subItems) == "table" then
+                                for _, subFile in ipairs(subItems) do
+                                    if subFile.type == "file" and string.sub(subFile.name:lower(), -4) == ".lua" then
+                                        table.insert(luaUrls, subFile.download_url or (SBORKS_RAW .. folderName .. "/" .. subFile.name))
+                                    end
+                                end
+                            end
+                        end
+
+                        if #luaUrls == 0 then
+                            table.insert(luaUrls, SBORKS_RAW .. folderName .. "/main.lua")
+                            table.insert(luaUrls, SBORKS_RAW .. folderName .. "/script.lua")
+                        end
+
+                        createSborkaCard(folderName, luaUrls, descUrl)
+                    end
+                end
+            end
+        end
+
+        local htmlSuccess, htmlContent = pcall(function()
+            return game:HttpGet(SBORKS_TREE .. "?t=" .. tostring(tick()), true)
+        end)
+
+        if htmlSuccess and type(htmlContent) == "string" then
+            for folderName in string.gmatch(htmlContent, 'sborks/([%w_%-]+)"') do
+                local luaUrls = { SBORKS_RAW .. folderName .. "/main.lua", SBORKS_RAW .. folderName .. "/script.lua" }
+                local descUrl = SBORKS_RAW .. folderName .. "/description.txt"
+                createSborkaCard(folderName, luaUrls, descUrl)
+            end
+        end
+
+        for _, sb in ipairs(defaultSborks) do
+            createSborkaCard(sb.name, sb.files, sb.descUrl)
+        end
+    end)
+end
+
 loadAllScripts()
+loadAllSborks()
 
 TweenService:Create(Container, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
     Size = targetSize,
