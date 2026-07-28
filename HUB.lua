@@ -1,15 +1,14 @@
--- 📌 Kraken Script Hub
+-- 📌 Kraken Script Hub (Liquid Glass 1:1)
 local Players = game:GetService("Players")
-local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- 🔗 Ссылки на ресурсы на GitHub
+-- 🔗 Ссылки на GitHub
 local RAW_BASE = "https://raw.githubusercontent.com/kryytoi/KrakenTeamScript/main/"
 local ICONS_BASE = RAW_BASE .. "icons/"
 local SCRIPTS_BASE = RAW_BASE .. "scripts/"
 
--- Функция для безопасного скачивания и отображения картинок с GitHub
+-- Функция загрузки картинок
 local function getOnlineImage(fileName)
     local url = ICONS_BASE .. fileName
     if writefile and getcustomasset then
@@ -23,43 +22,39 @@ local function getOnlineImage(fileName)
         end)
         if success then return result end
     end
-    return "" -- Фоллбек, если исполнитель не поддерживает сохранение файлов
+    return url
 end
 
--- Удаляем старую версию хаба, если она уже открыта
+-- Удаляем старый UI
 if PlayerGui:FindFirstChild("KrakenScriptHub") then
     PlayerGui.KrakenScriptHub:Destroy()
 end
 
--- 1. Основной ScreenGui
+-- 1. ScreenGui
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "KrakenScriptHub"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = PlayerGui
 
--- 2. Главный контейнер (Main Frame)
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 520, 0, 300)
-MainFrame.Position = UDim2.new(0.5, -260, 0.5, -150)
-MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 20)
-MainFrame.BorderSizePixel = 0
-MainFrame.Parent = ScreenGui
+-- 2. Главный обёрточный контейнер
+local Container = Instance.new("Frame")
+Container.Name = "Container"
+Container.Size = UDim2.new(0, 520, 0, 270)
+Container.Position = UDim2.new(0.5, -260, 0.5, -135)
+Container.BackgroundTransparency = 1
+Container.Parent = ScreenGui
 
-local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 16)
-MainCorner.Parent = MainFrame
-
--- 3. Левая боковая панель (SideBar)
+-- 3. Левая фиолетовая капсула (Sidebar)
 local SideBar = Instance.new("Frame")
 SideBar.Name = "SideBar"
 SideBar.Size = UDim2.new(0, 60, 1, 0)
-SideBar.BackgroundColor3 = Color3.fromRGB(88, 20, 138)
+SideBar.Position = UDim2.new(0, 0, 0, 0)
+SideBar.BackgroundColor3 = Color3.fromRGB(92, 18, 148)
 SideBar.BorderSizePixel = 0
-SideBar.Parent = MainFrame
+SideBar.Parent = Container
 
 local SideBarCorner = Instance.new("UICorner")
-SideBarCorner.CornerRadius = UDim.new(0, 16)
+SideBarCorner.CornerRadius = UDim.new(0.5, 0) -- Закругление в форму овальной капсулы
 SideBarCorner.Parent = SideBar
 
 local SideBarLayout = Instance.new("UIListLayout")
@@ -67,38 +62,49 @@ SideBarLayout.Parent = SideBar
 SideBarLayout.SortOrder = Enum.SortOrder.LayoutOrder
 SideBarLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 SideBarLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-SideBarLayout.Padding = UDim.new(0, 20)
+SideBarLayout.Padding = UDim.new(0, 32)
 
--- 4. Область содержимого (Content Area)
-local ContentArea = Instance.new("Frame")
-ContentArea.Name = "ContentArea"
-ContentArea.Size = UDim2.new(1, -70, 1, 0)
-ContentArea.Position = UDim2.new(0, 70, 0, 0)
-ContentArea.BackgroundTransparency = 1
-ContentArea.Parent = MainFrame
+-- 4. Правое окно (Liquid Glass Frame)
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(1, -75, 1, 0)
+MainFrame.Position = UDim2.new(0, 75, 0, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
+MainFrame.BackgroundTransparency = 0.25 -- Полупрозрачный эффект Liquid Glass
+MainFrame.BorderSizePixel = 0
+MainFrame.Parent = Container
 
--- Вкладка Главная (HomeTab)
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 22)
+MainCorner.Parent = MainFrame
+
+local MainPadding = Instance.new("UIPadding")
+MainPadding.PaddingTop = UDim.new(0, 20)
+MainPadding.PaddingLeft = UDim.new(0, 25)
+MainPadding.PaddingRight = UDim.new(0, 20)
+MainPadding.PaddingBottom = UDim.new(0, 20)
+MainPadding.Parent = MainFrame
+
+-- Вкладка Home
 local HomeTab = Instance.new("Frame")
 HomeTab.Name = "HomeTab"
-HomeTab.Size = UDim2.new(1, -20, 1, -20)
-HomeTab.Position = UDim2.new(0, 10, 0, 10)
+HomeTab.Size = UDim2.new(1, 0, 1, 0)
 HomeTab.BackgroundTransparency = 1
-HomeTab.Parent = ContentArea
+HomeTab.Parent = MainFrame
 
--- Вкладка Настройки (SettingsTab)
+-- Вкладка Settings
 local SettingsTab = Instance.new("Frame")
 SettingsTab.Name = "SettingsTab"
-SettingsTab.Size = UDim2.new(1, -20, 1, -20)
-SettingsTab.Position = UDim2.new(0, 10, 0, 10)
+SettingsTab.Size = UDim2.new(1, 0, 1, 0)
 SettingsTab.BackgroundTransparency = 1
 SettingsTab.Visible = false
-SettingsTab.Parent = ContentArea
+SettingsTab.Parent = MainFrame
 
--- Настройки размера
+-- Настройки в вкладке Settings
 local SettingsTitle = Instance.new("TextLabel")
 SettingsTitle.Size = UDim2.new(1, 0, 0, 30)
 SettingsTitle.BackgroundTransparency = 1
-SettingsTitle.Text = "Настройки размера Хаба"
+SettingsTitle.Text = "Настройки окна"
 SettingsTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 SettingsTitle.TextSize = 18
 SettingsTitle.Font = Enum.Font.SourceSansBold
@@ -106,10 +112,10 @@ SettingsTitle.TextXAlignment = Enum.TextXAlignment.Left
 SettingsTitle.Parent = SettingsTab
 
 local ResizeBtn = Instance.new("TextButton")
-ResizeBtn.Size = UDim2.new(0, 200, 0, 40)
+ResizeBtn.Size = UDim2.new(0, 180, 0, 36)
 ResizeBtn.Position = UDim2.new(0, 0, 0, 40)
-ResizeBtn.BackgroundColor3 = Color3.fromRGB(88, 20, 138)
-ResizeBtn.Text = "Размер: 520x300 (Нажми для 650x380)"
+ResizeBtn.BackgroundColor3 = Color3.fromRGB(92, 18, 148)
+ResizeBtn.Text = "Размер: 520x270"
 ResizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ResizeBtn.Font = Enum.Font.SourceSans
 ResizeBtn.TextSize = 14
@@ -123,17 +129,17 @@ local isExpanded = false
 ResizeBtn.MouseButton1Click:Connect(function()
     isExpanded = not isExpanded
     if isExpanded then
-        MainFrame.Size = UDim2.new(0, 650, 0, 380)
-        MainFrame.Position = UDim2.new(0.5, -325, 0.5, -190)
-        ResizeBtn.Text = "Размер: 650x380 (Нажми для 520x300)"
+        Container.Size = UDim2.new(0, 650, 0, 350)
+        Container.Position = UDim2.new(0.5, -325, 0.5, -175)
+        ResizeBtn.Text = "Размер: 650x350"
     else
-        MainFrame.Size = UDim2.new(0, 520, 0, 300)
-        MainFrame.Position = UDim2.new(0.5, -260, 0.5, -150)
-        ResizeBtn.Text = "Размер: 520x300 (Нажми для 650x380)"
+        Container.Size = UDim2.new(0, 520, 0, 270)
+        Container.Position = UDim2.new(0.5, -260, 0.5, -135)
+        ResizeBtn.Text = "Размер: 520x270"
     end
 end)
 
--- 5. Функция создания кнопок в левом меню
+-- 5. Иконки навигации в боковой панели
 local function createNavButton(iconFileName, layoutOrder, onClick)
     local btn = Instance.new("ImageButton")
     btn.Size = UDim2.new(0, 32, 0, 32)
@@ -158,39 +164,37 @@ createNavButton("settings.png", 2, function()
     SettingsTab.Visible = true
 end)
 
--- Кнопка Exit (exit.png)
+-- Кнопка Exit (exit.png) — закрывает UI
 createNavButton("exit.png", 3, function()
     ScreenGui:Destroy()
 end)
 
--- 6. Карточка скрипта (Universal Script)
-local ScriptCard = Instance.new("Frame")
-ScriptCard.Size = UDim2.new(1, 0, 0, 50)
-ScriptCard.Position = UDim2.new(0, 0, 0, 10)
-ScriptCard.BackgroundTransparency = 1
-ScriptCard.Parent = HomeTab
+-- 6. Строка со скриптом (start.png + Universal Script)
+local ScriptItem = Instance.new("Frame")
+ScriptItem.Size = UDim2.new(1, 0, 0, 40)
+ScriptItem.Position = UDim2.new(0, 0, 0, 10)
+ScriptItem.BackgroundTransparency = 1
+ScriptItem.Parent = HomeTab
 
--- Кнопка старта с иконкой start.png
 local StartBtn = Instance.new("ImageButton")
-StartBtn.Size = UDim2.new(0, 36, 0, 36)
-StartBtn.Position = UDim2.new(0, 0, 0.5, -18)
+StartBtn.Size = UDim2.new(0, 38, 0, 38)
+StartBtn.Position = UDim2.new(0, 0, 0, 0)
 StartBtn.BackgroundTransparency = 1
 StartBtn.Image = getOnlineImage("start.png")
-StartBtn.Parent = ScriptCard
+StartBtn.Parent = ScriptItem
 
--- Текст скрипта
 local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Size = UDim2.new(1, -50, 1, 0)
-TitleLabel.Position = UDim2.new(0, 48, 0, 0)
+TitleLabel.Size = UDim2.new(1, -60, 1, 0)
+TitleLabel.Position = UDim2.new(0, 55, 0, 0)
 TitleLabel.BackgroundTransparency = 1
 TitleLabel.Text = "Universal Script"
 TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TitleLabel.TextSize = 20
+TitleLabel.TextSize = 22
 TitleLabel.Font = Enum.Font.SourceSans
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-TitleLabel.Parent = ScriptCard
+TitleLabel.Parent = ScriptItem
 
--- 🚀 Запуск скрипта при нажатии на кнопку Старт
+-- Запуск скрипта при нажатии на start.png
 StartBtn.MouseButton1Click:Connect(function()
     local scriptUrl = SCRIPTS_BASE .. "Universal_script.lua"
     
@@ -201,10 +205,10 @@ StartBtn.MouseButton1Click:Connect(function()
         end)
         
         if not success then
-            warn("[Kraken Hub]: Ошибка запуска Universal_script.lua -> " .. tostring(err))
+            warn("[Kraken Hub]: Ошибка запуска -> " .. tostring(err))
         end
     end)
     
-    -- Закрываем хаб после старта
+    -- Удаляем хаб при запуске
     ScreenGui:Destroy()
 end)
